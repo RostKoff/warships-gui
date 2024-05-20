@@ -7,57 +7,60 @@ import (
 	tl "github.com/grupawp/termloop"
 )
 
-type InputConfig struct {
+type TextFieldConfig struct {
 	BgColor      Color
 	FgColor      Color
 	ActFgColor   Color
 	ActBgColor   Color
 	UnfilledChar rune
 	MaxLength    int
+	InputOn      bool
 }
 
-func NewInputConfig() *InputConfig {
-	return &InputConfig{
+func NewTextFieldConfig() *TextFieldConfig {
+	return &TextFieldConfig{
 		BgColor:      Black,
 		FgColor:      White,
 		ActFgColor:   Black,
 		ActBgColor:   White,
-		UnfilledChar: '_',
+		UnfilledChar: ' ',
 		MaxLength:    0,
+		InputOn:      false,
 	}
 }
 
-type Input struct {
+type TextField struct {
 	*tl.Rectangle
-	id       uuid.UUID
-	usrInput []rune
-	cfg      *InputConfig
-	active   bool
-	mx       sync.Mutex
+	id     uuid.UUID
+	txt    []rune
+	cfg    *TextFieldConfig
+	active bool
+	mx     sync.Mutex
 }
 
-func NewInput(
+func NewTextField(
 	x int,
 	y int,
 	w int,
 	h int,
-	cfg *InputConfig,
-) *Input {
+	cfg *TextFieldConfig,
+) *TextField {
 	if cfg == nil {
-		cfg = NewInputConfig()
+		cfg = NewTextFieldConfig()
 	}
 	if cfg.MaxLength == 0 {
 		cfg.MaxLength = w * h
 	}
-	return &Input{
+	return &TextField{
 		Rectangle: tl.NewRectangle(x, y, w, h, cfg.BgColor.toAttr()),
 		id:        uuid.New(),
-		usrInput:  make([]rune, 0),
+		txt:       make([]rune, 0),
 		cfg:       cfg,
 	}
 }
 
-func (in *Input) Draw(s *tl.Screen) {
+// Make Draw function better so it doesn't create new cells every time.
+func (in *TextField) Draw(s *tl.Screen) {
 	in.mx.Lock()
 	defer in.mx.Unlock()
 	w, h := in.Size()
@@ -72,7 +75,7 @@ func (in *Input) Draw(s *tl.Screen) {
 		fg = in.cfg.FgColor.toAttr()
 	}
 	currI, currJ := 0, 0
-	for _, char := range in.usrInput {
+	for _, char := range in.txt {
 		if currI >= w {
 			currI = 0
 			currJ++
@@ -81,15 +84,20 @@ func (in *Input) Draw(s *tl.Screen) {
 		currI++
 	}
 
+	unfilled := tl.Cell{Ch: in.cfg.UnfilledChar, Fg: fg, Bg: bg}
 	for j := currJ; y+j < maxY; j++ {
 		for ; currI < w; currI++ {
-			s.RenderCell(x+currI, y+j, &tl.Cell{Ch: in.cfg.UnfilledChar, Fg: fg, Bg: bg})
+			s.RenderCell(x+currI, y+j, &unfilled)
 		}
 		currI = 0
 	}
 }
 
-func (in *Input) Tick(e tl.Event) {
+func (in *TextField) Tick(e tl.Event) {
+	if !in.cfg.InputOn {
+		return
+	}
+
 	x, y := in.Position()
 	w, h := in.Size()
 	switch e.Key {
@@ -106,34 +114,40 @@ func (in *Input) Tick(e tl.Event) {
 	}
 }
 
-func (in *Input) handleInput(key tl.Key, char rune) {
+func (in *TextField) handleInput(key tl.Key, char rune) {
 	in.mx.Lock()
 	defer in.mx.Unlock()
-	len := len(in.usrInput)
+	len := len(in.txt)
 	switch key {
 	case tl.KeyBackspace | tl.KeyBackspace2:
 		if len > 0 {
-			in.usrInput = in.usrInput[:len-1]
+			in.txt = in.txt[:len-1]
 		}
 	case tl.KeySpace:
 		if len < in.cfg.MaxLength {
-			in.usrInput = append(in.usrInput, ' ')
+			in.txt = append(in.txt, ' ')
 		}
 	default:
 		if char != 0 && len < in.cfg.MaxLength {
-			in.usrInput = append(in.usrInput, char)
+			in.txt = append(in.txt, char)
 		}
 	}
 }
 
-func (in *Input) GetInput() string {
-	return string(in.usrInput)
+func (in *TextField) SetText(text string) {
+	in.mx.Lock()
+	defer in.mx.Unlock()
+	in.txt = []rune(text)
 }
 
-func (in *Input) Drawables() []tl.Drawable {
+func (in *TextField) GetText() string {
+	return string(in.txt)
+}
+
+func (in *TextField) Drawables() []tl.Drawable {
 	return []tl.Drawable{in}
 }
 
-func (in *Input) ID() uuid.UUID {
+func (in *TextField) ID() uuid.UUID {
 	return in.id
 }
