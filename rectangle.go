@@ -31,7 +31,8 @@ func (c *rectangle) Tick(e tl.Event) {
 
 func (c *rectangle) processClick(e tl.Event) {
 	x, y := c.Position()
-	if e.MouseX >= x && e.MouseY >= y && e.MouseX <= (x+fieldWidth) && e.MouseY <= (y+fieldHeight) {
+	w, h := c.Size()
+	if e.MouseX >= x && e.MouseY >= y && e.MouseX < (x+w) && e.MouseY < (y+h) {
 		select {
 		case c.ch <- c.coord:
 		default:
