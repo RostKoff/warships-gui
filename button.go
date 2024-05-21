@@ -121,12 +121,12 @@ func (b *Button) SetBorderColor(color Color) {
 
 func (b *Button) SetText(text string) {
 	b.txt.SetText(text)
-
-	length := len(text)
+	x, y := b.rec.Position()
 	w, h := b.rec.Size()
-	x := (w - length) / 2
-	y := h / 2
-	b.txt.SetPosition(x, y)
+	length := len(text)
+	txtX := (w - length) / 2
+	txtY := h / 2
+	b.txt.SetPosition(x+txtX, y+txtY)
 }
 
 func (b *Button) Drawables() []tl.Drawable {
