@@ -2,7 +2,6 @@ package gui
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	tl "github.com/grupawp/termloop"
@@ -18,7 +17,6 @@ func NewHandleArea(objs map[string]Physical) *HandleArea {
 	clickables := make([]*Clickable, 0)
 	ch := make(chan string)
 	for key, obj := range objs {
-		fmt.Print(key)
 		clickables = append(clickables, NewClickableOn(obj, key, ch))
 	}
 	return &HandleArea{
@@ -26,6 +24,10 @@ func NewHandleArea(objs map[string]Physical) *HandleArea {
 		clickables: clickables,
 		ch:         ch,
 	}
+}
+
+func (area *HandleArea) SetClickables(clickables []*Clickable) {
+	area.clickables = clickables
 }
 
 func (area *HandleArea) ID() uuid.UUID {
