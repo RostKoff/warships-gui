@@ -14,11 +14,8 @@ type HandleArea struct {
 }
 
 func NewHandleArea(objs map[string]Physical) *HandleArea {
-	clickables := make([]*Clickable, 0)
 	ch := make(chan string)
-	for key, obj := range objs {
-		clickables = append(clickables, NewClickableOn(obj, key, ch))
-	}
+	clickables := createClickables(objs, ch)
 	return &HandleArea{
 		id:         uuid.New(),
 		clickables: clickables,
@@ -26,8 +23,16 @@ func NewHandleArea(objs map[string]Physical) *HandleArea {
 	}
 }
 
-func (area *HandleArea) SetClickables(clickables []*Clickable) {
+func (area *HandleArea) SetClickablesOn(objs map[string]Physical) {
+	clickables := createClickables(objs, area.ch)
 	area.clickables = clickables
+}
+
+func createClickables(objs map[string]Physical, ch chan<- string) (clickables []*Clickable) {
+	for key, obj := range objs {
+		clickables = append(clickables, NewClickableOn(obj, key, ch))
+	}
+	return
 }
 
 func (area *HandleArea) ID() uuid.UUID {
