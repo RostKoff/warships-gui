@@ -129,6 +129,10 @@ func (b *Button) SetText(text string) {
 	b.txt.SetPosition(x+txtX, y+txtY)
 }
 
+func (b *Button) Text() string {
+	return b.txt.Text()
+}
+
 func (b *Button) Drawables() []tl.Drawable {
 	return []tl.Drawable{b}
 }

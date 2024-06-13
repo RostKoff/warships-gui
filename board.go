@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	tl "github.com/grupawp/termloop"
 	"github.com/google/uuid"
+	tl "github.com/grupawp/termloop"
 )
 
 const (
@@ -33,31 +33,39 @@ type Board struct {
 
 // BoardConfig holds configuration parameters for Board struct.
 type BoardConfig struct {
-	RulerColor Color
-	TextColor  Color
-	EmptyColor Color
-	HitColor   Color
-	MissColor  Color
-	ShipColor  Color
-	EmptyChar  byte
-	HitChar    byte
-	MissChar   byte
-	ShipChar   byte
+	RulerColor    Color
+	TextColor     Color
+	EmptyColor    Color
+	HitColor      Color
+	MissColor     Color
+	ShipColor     Color
+	EmphasisColor Color
+	BlockedColor  Color
+	EmptyChar     byte
+	HitChar       byte
+	MissChar      byte
+	ShipChar      byte
+	EmphasisChar  byte
+	BlockedChar   byte
 }
 
 // NewBoardConfig returns a new config with default values.
 func NewBoardConfig() *BoardConfig {
 	return &BoardConfig{
-		RulerColor: White,
-		TextColor:  Black,
-		EmptyColor: Blue,
-		HitColor:   Red,
-		MissColor:  Grey,
-		ShipColor:  Green,
-		EmptyChar:  '~',
-		HitChar:    'H',
-		MissChar:   'M',
-		ShipChar:   'S',
+		RulerColor:    White,
+		TextColor:     Black,
+		EmptyColor:    Blue,
+		HitColor:      Red,
+		MissColor:     Grey,
+		ShipColor:     Green,
+		EmphasisColor: Orange,
+		BlockedColor:  Grey,
+		EmptyChar:     '~',
+		HitChar:       'H',
+		MissChar:      'M',
+		ShipChar:      'S',
+		EmphasisChar:  '!',
+		BlockedChar:   'X',
 	}
 }
 
@@ -69,6 +77,10 @@ func (c *BoardConfig) getColor(state State) Color {
 		return c.MissColor
 	case Ship:
 		return c.ShipColor
+	case Emphasis:
+		return c.EmphasisColor
+	case Blocked:
+		return c.BlockedColor
 	default:
 		return c.EmptyColor
 	}
@@ -82,6 +94,10 @@ func (c *BoardConfig) getChar(state State) byte {
 		return c.MissChar
 	case Ship:
 		return c.ShipChar
+	case Emphasis:
+		return c.EmphasisChar
+	case Blocked:
+		return c.BlockedChar
 	default:
 		return c.EmptyChar
 	}
@@ -140,8 +156,8 @@ func NewBoard(x, y int, cfg *BoardConfig) *Board {
 	return b
 }
 
-// SetStates sets the states of the board. The states are represented 
-// as a 10x10 matrix, where the first index is the X coordinate and 
+// SetStates sets the states of the board. The states are represented
+// as a 10x10 matrix, where the first index is the X coordinate and
 // the second index is the Y coordinate.
 // Example: states[0][0] is the state of the field A1.
 func (b *Board) SetStates(states [10][10]State) {
@@ -169,7 +185,7 @@ func (b *Board) Drawables() []tl.Drawable {
 	return d
 }
 
-// Listen blocks until a field is clicked by the user and returns the 
+// Listen blocks until a field is clicked by the user and returns the
 // field as a string containing coordinates. Use context to control
 // cancelation and prevent listening indefinitely.
 func (b *Board) Listen(ctx context.Context) string {
